@@ -6,10 +6,9 @@ public class Main {
 
     static int totalOwnerPercentage = 0;
     static int ownerShip = 0;
+    static Scanner input = new Scanner(System.in);
 
     public static void main(String[] args) {
-
-        Scanner input = new Scanner(System.in);
         String restaurantName;
         int totalOwners;
 
@@ -104,7 +103,7 @@ public class Main {
             }
         } while (choice != 0);
 
-        String[] employeesArray = new String[1];
+//        String[] employeesArray = new String[1];
 
 
     }
@@ -131,9 +130,21 @@ public class Main {
                     break;
                 case 2:
                     streck();
-                    ownersArray = addNewOwner(input, ownersArray);
-                    print("Ny lista av ägare");
+                    while (true) {
+                        print("Ange ägarens andel>>");
+                        ownerShip = input.nextInt();
+                        if (ownerShip < 0 || ownerShip >= 100) {
+                            print("Ange ett värde mellan 1-99! Försök igen!");
+                        } else break;
+                    }
                     printAll(ownersArray);
+                    correctOwnership(ownersArray, ownerShip, false);
+                    int[] newOwnersArray = new int[ownersArray.length + 1];
+                    for (int i = 0; i < ownersArray.length; i++) {
+                        newOwnersArray[i] = ownersArray[i];
+                    }
+                    newOwnersArray[newOwnersArray.length-1] = ownerShip;
+                    printAll(newOwnersArray);
                     streck();
                     break;
                 case 3:
@@ -143,61 +154,58 @@ public class Main {
                     print("Ta bort");
                     break;
                 default:
-                    print("Gör ett val mellan 0-4");
+                    println("Gör ett val mellan 0-4");
             }
         } while (subChoice != 0);
     }
 
-    private static int[] addNewOwner(Scanner input, int[] ownersArray) {
-        int[] newOwnersArray = new int[ownersArray.length + 1];
-        int shareToTake;
-        int ownerToReduce;
-
-
-        print("Ange ny ägares andel>>");
-        ownerShip = input.nextInt();
-
-        if (ownerShip <= 0 || ownerShip >= 100) {
-            println("Ange ett värde från 1-99%!");
-            return ownersArray;
-        }
-
-        int totalReduction = 0;
-
-        while (totalReduction < ownerShip) {
-            printAll(ownersArray);
-            print("Vilken ägare vill du ta ifrån?>>");
-            ownerToReduce = input.nextInt() - 1;
-
-            if (ownerToReduce < 0 || ownerToReduce >= ownersArray.length) {
-                print("Välj en av ägarna!");
-                continue;
-            }
-
-            print("Hur mycket % vill du ta från ägare " + (ownerToReduce + 1) + " ?>>");
-            shareToTake = input.nextInt();
-
-
-            if (shareToTake <= 0) {
-                print("Minst 1%!");
-
-            } else if (shareToTake > ownersArray[ownerToReduce]) {
-                print("Max " + ownersArray[ownerToReduce] + "%!");
-
-            } else if (totalReduction + shareToTake > ownerShip) {
-                println("Du behöver bara ta " + (ownerShip - totalReduction) + "% mer.");
-
+    private static int[] correctOwnership(int[] arrayParam, int wantedOwnership, boolean giveAwayOwnership) {
+        String giveOrTake = giveAwayOwnership ? "fördelas ut" : "tas fram";
+        String infoGiveOrTake = giveAwayOwnership ? "ge till" : "ta ifrån";
+        do {
+            println("Det är " + wantedOwnership + " procentenheter som behöver " + giveOrTake + " ");
+            if (giveAwayOwnership) {
+                println("Vilken ägare vill du ge ägarandelar till?");
             } else {
-                ownersArray[ownerToReduce] -= shareToTake;
-                totalReduction += shareToTake;
+                println("Vilken ägare vill du ta ägarandelar av");
             }
-        }
-        for (int i = 0; i < ownersArray.length; i++) {
-            newOwnersArray[i] = ownersArray[i];
-        }
-        newOwnersArray[ownersArray.length] = ownerShip;
+            for (int i = 0; i < arrayParam.length; i++) {
+                println("Ägare " + (i + 1) + ":" + arrayParam[i] + "%");
+            }
 
-        return newOwnersArray;
+            int ownerIndex;
+
+            while (true) {
+                print("Ange siffran för vilken ägare du vill " + infoGiveOrTake + ">>");
+                ownerIndex = input.nextInt() - 1;
+                if (arrayParam[ownerIndex] == 1 && !giveAwayOwnership) {
+                    println("Ägare " + ownerIndex + " har bara 1% kvar. Du kan inte ta bort det sista");
+                } else if (ownerIndex > arrayParam.length - 1) {
+                    println("Felaktigt val. Prova igen...");
+                } else break;
+            }
+            int correctOwnership;
+            while (true) {
+                print("Hur många procentenheter vill du " + infoGiveOrTake + " ägare " + (ownerIndex + 1) + "?>>");
+                correctOwnership = input.nextInt();
+                if (correctOwnership > wantedOwnership) {
+                    println("Du kan inte ta mer än " + wantedOwnership + "%");
+                } else if (correctOwnership > (arrayParam[ownerIndex] - 1)) {
+                    println("Du kan endast ta " + (arrayParam[ownerIndex] - 1) + " procentenheter från ägaren...");
+                } else break;
+            }
+            ownerIndex--;
+            int takeAwayOwnership = correctOwnership;
+            if (giveAwayOwnership) {
+                arrayParam[ownerIndex + 1] += takeAwayOwnership;
+            } else {
+                arrayParam[ownerIndex + 1] -= takeAwayOwnership;
+            }
+            wantedOwnership -= takeAwayOwnership;
+
+        } while (wantedOwnership != 0);
+
+        return arrayParam;
     }
 
     private static void printAll(int[] ownersArray) {
